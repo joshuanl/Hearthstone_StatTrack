@@ -1,0 +1,53 @@
+TABLE OF CONTENTS
+
+  I.  THINGS TO DO BEFORE STARTING A GAME
+           a.  PICK YOUR HERO
+           b.  PICK YOUR DECK
+                  i.  ADD DECK
+                  ii.  EDIT DECK
+           c.  SET YOUR RANK
+           d.  VIEW MATCHUP HISTORY
+  II.  AFTER FINDING A GAME
+           a.  SET OPPONENT HERO
+           b.  SET THEIR DECK
+                  i.  ADD DECK
+                  ii.  ADD ARCH TYPES
+  III.  AFTER FINISHING A GAME
+           a.  RECORD STATS
+  IV.  HOT KEYS
+
+==================================================================================
+  I.  THINGS TO DO BEFORE STARTING A GAME
+	
+           a.  PICK YOU HERO
+               Once you pick your hero from the Main Screen, you are locked into that hero.  If you want to change heroes, you will have to go back to the Main Screen.  To go back to the Main Screen, you can either close the Stats Window or click on ‘Windows’ and then ‘Back to Main Screen’.  
+		
+           b.  PICK YOUR DECK
+               Use the drop down box to choose your deck.  If the deck you are using is not listed, select ‘NEW DECK’ and then click the ‘Edit Deck’ button.  You can edit information on any deck by selecting that deck and clicking the ‘Edit Deck’ button.
+		
+           c.  SET YOUR RANK
+               Before starting a game, make sure the current rank shown is correct.  Use the ‘+’ and ‘-‘ button to change to your rank.  You will have the option to update your rank after winning/losing a game when you click the ‘Game Ended’ button.
+		
+           d.  VIEW MATCHUP HISTORY
+               After selecting an opponent, you can view your win and loss history against the hero.  If you have also selected the opponents deck, this query will show the win and loss history against that ‘Deck Type’.
+		
+  II.  AFTER FINDING A GAME
+	
+           a.  SET OPPONENT HERO
+               Use the drop down box to set the opponent hero.  The portrait will change automatically.  By default, Shaman is selected.
+           b.  SET THEIR DECK
+               Use the drop down box to pick the deck type that best matches the opponent.  If there is no ‘Deck Type’ that matches, you can click the ‘Add Deck Type’ button to create the new deck type.  Deck ‘Arch Types’ will automatically be displayed after choosing a deck.  If there is an Arch Type missing or after adding a new ‘Deck Type’ you can click the ‘Add Arch Types’ button to add the missing Arch Type(s).
+		
+  III.  AFTER FINISHING A GAME
+	
+           a.  RECORD STATS
+               After finishing a game you will need to click the ‘Game Ended’ button.  Before doing so, make sure that all game data has been correctly set.  If you ranked up or down after the game, change it after clicking the ‘Game Ended’ button.  After clicking the button, a dialogue box will open asking about the outcome of the match.  After clicking the ‘Won’ or ‘Lost’, the Win/Loss values in the window will update accordingly.  Remember to change the ‘Deck Type’ and ‘Opponent’ for the next game.
+	
+  IV.  HOT KEYS
+           CTRL + A:  Opens ‘Add Arch Type’ window
+           CTRL + B:  Goes back to the ‘Main Screen’
+           CTRL + D:  Opens ‘Add Deck’ window
+           CTRL + H:  It opens this window homie
+           CTRL + T:  Opens ‘Add Deck Type’ window
+
+
