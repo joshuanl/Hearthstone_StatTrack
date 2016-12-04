@@ -18,8 +18,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import Data.DeckData;
+import Data.Stats;
 
 public class MainScreen extends JFrame{
+	static Stats allStats;
 	private JPanel centerPanel;
 	private JLabel pictureLabel;
 	private JLabel portraitSelectedLabel;
@@ -48,6 +50,8 @@ public class MainScreen extends JFrame{
 		setLocation(250,10);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setResizable(false);
+		
+		allStats = new Stats();
 		
 		initVars();
 		addActions();

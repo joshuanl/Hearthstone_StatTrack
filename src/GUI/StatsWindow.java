@@ -6,6 +6,8 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,12 +15,12 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -30,6 +32,8 @@ import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 
 import Data.DeckData;
+import Data.MatchData;
+import Data.Stats;
 
 public class StatsWindow extends JFrame{
 
@@ -39,7 +43,7 @@ public class StatsWindow extends JFrame{
 	private JLabel rankLabel;
 	private JLabel winLabel;
 	private JLabel lossLabel;
-	private JLabel archTypeLabel;
+	private static JLabel archTypeLabel;
 	private ImageIcon heroPortraitImage;
 	private ImageIcon opponentPortraitImage;
 	private JButton addDeckButton;
@@ -64,7 +68,9 @@ public class StatsWindow extends JFrame{
 	private JTextArea helpTextArea;
 	
 	private String _deckList[];
-	private ArrayList<String> archTypes;
+	protected static ArrayList<String> archTypes;
+	protected static ArrayList<String> displayedArchTypes;
+	private int _heroSelected;
 	private int _rank;
 	private int _winAmount;
 	private int _lossAmount;
@@ -76,12 +82,21 @@ public class StatsWindow extends JFrame{
 		setLayout(new BorderLayout());
 		setSize(400,245);
 		setLocation(500,250);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setResizable(false);
+		this.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                //SAVE EVERYTHING
+            	new MainScreen();
+            	closeWindow();
+            }
+
+        });
 		
-		//_heroSelected = heroSelected;	
+		_heroSelected = heroSelected;	
 		
 		initVars(heroSelected);
+		loadArchTypes();
 		addActions();
 		addComp();
 		
@@ -94,6 +109,7 @@ public class StatsWindow extends JFrame{
 		_lossAmount = 7;
 		_isLegendRank = false;
 		archTypes = new ArrayList<String>();
+		displayedArchTypes  = new ArrayList<String>();
 		
 		centerPanel = new JPanel();
 		centerPanel.setLayout(null);
@@ -186,7 +202,7 @@ public class StatsWindow extends JFrame{
 		((JLabel)opponentDeckTypeCB.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
 		//==============================================
 		
-		archTypeLabel = new JLabel("ARCH TYPES: ");
+		archTypeLabel = new JLabel("ARCHTYPES: ");
 		
 		createDeckTypeButton = new JButton("Add Deck Type");
 		createDeckTypeButton.setSize(115, 30);
@@ -194,7 +210,7 @@ public class StatsWindow extends JFrame{
 		createDeckTypeButton.setFont(new Font("Serif", Font.BOLD, 12));
 		createDeckTypeButton.setAlignmentX(CENTER_ALIGNMENT);
 		
-		addDeckArchTypeButton = new JButton("Add Arch Types");
+		addDeckArchTypeButton = new JButton("Set Arch Types");
 		addDeckArchTypeButton.setSize(165, 30);
 		addDeckArchTypeButton.setLocation(115, 145);
 		addDeckArchTypeButton.setFont(new Font("Serif", Font.BOLD, 15));
@@ -289,33 +305,13 @@ public class StatsWindow extends JFrame{
 		
 		addDeckButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
-				String userInput = JOptionPane.showInputDialog(StatsWindow.this, "Input DeckTpye", "Add New Deck", JOptionPane.QUESTION_MESSAGE);
-				if(isDuplicate(userInput, _deckList)){
-					JOptionPane.showMessageDialog(StatsWindow.this, "Duplicate deck name entered!", "ERROR", JOptionPane.ERROR_MESSAGE);
-				}//eo if
+				if(currentDeckCB.getSelectedItem().toString().equals("NEW DECK")){
+					newDeckDialoge();
+				}
 				else{
-					int userChoice = -1;
-					try{
-						userChoice = JOptionPane.showConfirmDialog(StatsWindow.this, "Add the deck: \""+ userInput.toUpperCase() + "\"?", "Add New Deck", JOptionPane.YES_NO_OPTION);
-					}catch(NullPointerException npe){
-						System.out.println("NPE: " + npe.getMessage());
-					}
-					
-					switch(userChoice){
-						case JOptionPane.YES_OPTION:
-							String newList[] = new String[_deckList.length+1];
-							for(int i=0; i < _deckList.length; i++){
-								newList[i] = _deckList[i];
-							}//eo for
-							newList[_deckList.length] = userInput.toUpperCase();
-							_deckList = newList;
-							currentDeckCB.addItem(userInput.toUpperCase());
-							currentDeckCB.setFont(new Font("Serif", Font.BOLD, 11));
-							break;
-						case JOptionPane.NO_OPTION:
-							break;
-					}//eo switch
-				}//eo else if
+					//OPEN EDIT DECK WINDOW
+					System.out.println("OPEN EDIT DECK WINDOW");
+				}
 			}
 		});
 		
@@ -324,29 +320,73 @@ public class StatsWindow extends JFrame{
 				new HelpInfoWindow();
 			}
 		});
-	}//eo addactions
-	
-	public void loadHelpTextFile(){
 		
-	}//end of loadHelpTextFile
-	
-	public boolean isDuplicate(String input, String array[]){
-		for(int i=0; i < array.length; i++){
-			if(array[i].equalsIgnoreCase(input)){
-				return true;
-			}//eo if
-		}//eo for
-		return false;
-	}//eo method
-	
-	public boolean isDuplicate(String input, ArrayList<String> array){
-		for(int i=0; i < array.size(); i++){
-			if(array.get(i).equalsIgnoreCase(input)){
-				return true;
-			}//eo if
-		}//eo for
-		return false;
-	}//eo method
+		addDeckArchTypeButton.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent ae){
+				new Thread(new ArchTypeWindow()).start();
+			}
+		});
+		
+		gameFinishedButton.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent ae){
+				if(currentDeckCB.getSelectedItem().toString().equals("NEW DECK")){
+			    	JOptionPane.showMessageDialog(null, "No deck selected for player! ", "GAME NOT RECORDED", JOptionPane.ERROR_MESSAGE);
+			    	return;
+				}
+				else if(opponentHeroCB.getSelectedItem().toString().equals("Choose Opponent")){
+					JOptionPane.showMessageDialog(null, "Opponent Hero not set! ", "GAME NOT RECORDED", JOptionPane.ERROR_MESSAGE);
+			    	return;
+				}
+				else if(opponentDeckTypeCB.getSelectedItem().toString().equals("DECK TYPE")){
+					JOptionPane.showMessageDialog(null, "No deck type selected for opponent! ", "GAME NOT RECORDED", JOptionPane.ERROR_MESSAGE);
+			    	return;
+				}
+				Object [] options = {"Won", "Lost"};
+				int value = JOptionPane.showOptionDialog(StatsWindow.this,
+				"Outcome of the game?",
+				"Recording Game Outcome",
+				JOptionPane.YES_NO_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				null, // icon to display
+				options,
+				options[0]);
+				String hN = getHeroName(_heroSelected);
+				String dN = currentDeckCB.getSelectedItem().toString();
+				String oN = getHeroName(opponentHeroCB.getSelectedIndex());
+				String oDT = opponentDeckTypeCB.getSelectedItem().toString(); 
+//=================================================NEED TO SET dA IN EDIT DECK BUTTON 						
+				ArrayList<String> dA = new  ArrayList<String>();
+				ArrayList<String>oDA = displayedArchTypes;
+				String r = rankLabel.getText();
+				int gW = _winAmount;
+				int gL = _lossAmount;
+				MatchData matchData;
+				Map<String, Map<String, DeckData>> data = MainScreen.allStats.getData();	//added for readability of next lines
+				Map<String, DeckData> deckMap = data.get(hN);
+				DeckData dData = deckMap.get(dN);
+				
+				switch(value){
+					case JOptionPane.YES_OPTION:
+						matchData = new MatchData(hN, oN, dN, oDT, new ArrayList<String>(), oDA, gW, gL, r, true);				
+						dData.addMatch(matchData);
+						deckMap.put(dN, dData);
+						MainScreen.allStats.data.put(hN, deckMap);
+				    	JOptionPane.showMessageDialog(null, "Game Recorded!  Be sure to reset information for the next game! ", "GAME RECORDED", JOptionPane.INFORMATION_MESSAGE);
+
+						break;
+					case JOptionPane.NO_OPTION:
+						matchData = new MatchData(hN, oN, dN, oDT, new ArrayList<String>(), oDA, gW, gL, r, false);
+						dData.addMatch(matchData);
+						deckMap.put(dN, dData);
+						MainScreen.allStats.data.put(hN, deckMap);
+				    	JOptionPane.showMessageDialog(null, "Game Recorded!  Be sure to reset information for the next game! ", "GAME RECORDED", JOptionPane.INFORMATION_MESSAGE);
+
+						break;
+				}//eo switch
+			}
+		});
+		
+	}//eo addactions
 	
 	public void addComp(){
 		centerPanel.add(heroPortraitLabel);
@@ -377,6 +417,123 @@ public class StatsWindow extends JFrame{
 		add(centerPanel, BorderLayout.CENTER);
 		add(archTypeLabel, BorderLayout.SOUTH);
 	}//eo addcomp
+	
+	public void closeWindow(){
+		this.dispose();
+	}//eo closing window
+	
+	public void newDeckDialoge(){
+		String userInput = JOptionPane.showInputDialog(StatsWindow.this, "Input deck name", "Add New Deck", JOptionPane.QUESTION_MESSAGE);
+		if(isDuplicate(userInput, _deckList)){
+			JOptionPane.showMessageDialog(StatsWindow.this, "Duplicate deck name entered!", "ERROR", JOptionPane.ERROR_MESSAGE);
+		}//eo if
+		else{
+			int userChoice = -1;
+			try{
+				userChoice = JOptionPane.showConfirmDialog(StatsWindow.this, "Add the deck: \""+ userInput.toUpperCase() + "\"?", "Add New Deck", JOptionPane.YES_NO_OPTION);
+			}catch(NullPointerException npe){
+				System.out.println("NPE: " + npe.getMessage());
+			}
+			
+			switch(userChoice){
+				case JOptionPane.YES_OPTION:
+					String newList[] = new String[_deckList.length+1];
+					for(int i=0; i < _deckList.length; i++){
+						newList[i] = _deckList[i];
+					}//eo for
+					newList[_deckList.length] = userInput.toUpperCase();
+					_deckList = newList;
+					currentDeckCB.addItem(userInput.toUpperCase());
+					currentDeckCB.setFont(new Font("Serif", Font.BOLD, 11));
+					break;
+				case JOptionPane.NO_OPTION:
+					break;
+			}//eo switch
+		}//eo else if
+	}//eo newDeckDialoge()
+	
+	public static void updateDisplayedArchTypes(){
+		archTypeLabel.setText("ARCHTYPES: ");
+		for (int i = 0; i < displayedArchTypes.size(); i++) {
+			if(i == displayedArchTypes.size()-1){
+				archTypeLabel.setText(archTypeLabel.getText() + displayedArchTypes.get(i));
+			}
+			else{
+				archTypeLabel.setText(archTypeLabel.getText() + displayedArchTypes.get(i) + ", ");
+			}
+			
+		}//eo for
+	}//eo updateDisplayedArchTypes
+	
+	public String getHeroName(int index){
+		String heroName = "NULL";
+		switch(index){
+		case 0:
+			heroName = "WARRIOR";
+			break;
+		case 1:
+			heroName = "SHAMAN";
+			break;
+		case 2:
+			heroName = "ROGUE";
+			break;
+		case 3:
+			heroName = "PALADIN";
+			break;
+		case 4:
+			heroName = "HUNTER";
+			break;
+		case 5:
+			heroName = "DRUID";
+			break;
+		case 6:
+			heroName = "WARLOCK";
+			break;
+		case 7:
+			heroName = "MAGE";
+			break;
+		case 8:
+			heroName = "PRIEST";
+			break;
+		}//eo switch
+		return heroName;
+	}//eo getting hero name from index
+	
+	public static void loadArchTypes(){
+		FileReader fr;
+		BufferedReader br;
+		try {
+			fr = new FileReader("src/Data/archTypeDemo.txt");
+			br = new BufferedReader(fr);
+			String deckType = br.readLine();
+			while(deckType != null){
+				archTypes.add(deckType);
+				deckType = br.readLine();
+			}//eo while
+		} catch (FileNotFoundException e) {
+			System.err.println("FileNotFoundException: " + e.getMessage());
+		} catch (IOException e) {
+			System.err.println("IOException: " + e.getMessage());
+		}
+	}//end of loadHelpTextFile
+	
+	public static boolean isDuplicate(String input, String array[]){
+		for(int i=0; i < array.length; i++){
+			if(array[i].equalsIgnoreCase(input)){
+				return true;
+			}//eo if
+		}//eo for
+		return false;
+	}//eo method
+	
+	public static boolean isDuplicate(String input, ArrayList<String> array){
+		for(int i=0; i < array.size(); i++){
+			if(array.get(i).equalsIgnoreCase(input)){
+				return true;
+			}//eo if
+		}//eo for
+		return false;
+	}//eo method
 	
 	public void loadDeckList(int heroSelected){
 		int listSize = 0;
@@ -459,28 +616,8 @@ public class StatsWindow extends JFrame{
 	}//eo method
 	
 	public static void openHelpWindow(){
-		
+		System.out.println("need to finish");
 	}//eo opening help window
+
 	
-	private class ArchTypeWindow extends JFrame{
-		
-		public ArchTypeWindow(){
-			super("Hearthstone Deck StatTracker");
-			setLayout(null);
-			setSize(400,200);
-			setLocation(500,250);
-			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			setResizable(false);
-			
-			
-			
-//			initVars();
-//			addActions();
-//			addComp();
-			
-			setVisible(true);
-		}//end of constructor
-		
-		
-	}//end of inner class
 }//eo class

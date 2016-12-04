@@ -1,6 +1,8 @@
 package GUI;
 
 import java.awt.BorderLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -22,9 +24,14 @@ public class HelpInfoWindow extends JFrame{
 		setLayout(new BorderLayout());
 		setSize(600,300);
 		setLocation(500,250);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setResizable(false);
-		
+		this.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+            	closeWindow();
+            }
+
+        });
 		
 		
 		initVars();
@@ -52,6 +59,10 @@ public class HelpInfoWindow extends JFrame{
 		add(centerPanel, BorderLayout.CENTER);
 	}//eo add comp
 
+	public void closeWindow(){
+		this.dispose();
+	}
+	
 	private void loadHelpText(){
 		FileReader fr;
 		BufferedReader br;
