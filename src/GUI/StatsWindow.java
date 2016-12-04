@@ -1,5 +1,6 @@
 package GUI;
 
+
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.Image;
@@ -13,7 +14,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -31,21 +34,23 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 
+import com.google.gson.Gson;
+
 import Data.DeckData;
 import Data.MatchData;
 import Data.Stats;
 
-public class StatsWindow extends JFrame{
+public class StatsWindow extends JFrame implements Runnable{
 
 	private JPanel centerPanel;
 	private JLabel heroPortraitLabel;
-	private JLabel opponentPortraitLabel;
+	volatile private JLabel opponentPortraitLabel;
 	private JLabel rankLabel;
 	private JLabel winLabel;
 	private JLabel lossLabel;
 	private static JLabel archTypeLabel;
 	private ImageIcon heroPortraitImage;
-	private ImageIcon opponentPortraitImage;
+	volatile private ImageIcon opponentPortraitImage;
 	private JButton addDeckButton;
 	private JButton rankUpButton;
 	private JButton rankDownButton;
@@ -56,7 +61,7 @@ public class StatsWindow extends JFrame{
 	private JButton mainScreenButon;
 	private JComboBox<String> currentDeckCB;
 	private JComboBox<String> opponentDeckTypeCB;
-	private JComboBox<String> opponentHeroCB;
+	volatile private JComboBox<String> opponentHeroCB;
 	private JMenu helpMenu;
 	private JMenu windowMenu;
 	private JMenuBar jmenubar;
@@ -67,9 +72,10 @@ public class StatsWindow extends JFrame{
 	private JMenuItem mainScreenMenuItem;
 	private JTextArea helpTextArea;
 	
-	private String _deckList[];
+	public static String _deckList[];
 	protected static ArrayList<String> archTypes;
 	protected static ArrayList<String> displayedArchTypes;
+	private String _heroName;
 	private int _heroSelected;
 	private int _rank;
 	private int _winAmount;
@@ -162,14 +168,14 @@ public class StatsWindow extends JFrame{
 		viewMatchupHistoryButton.setSize(120, 25);
 		viewMatchupHistoryButton.setLocation(280, 25);
 		
-		winLabel = new JLabel("WIN: " + _winAmount);
+		winLabel = new JLabel("WON: " + _winAmount);
 		winLabel.setFont(new Font("Serif", Font.BOLD, 18));
 		winLabel.setAlignmentX(MAXIMIZED_HORIZ);
 		winLabel.setAlignmentY(MAXIMIZED_VERT);
 		winLabel.setSize(80, 45);
 		winLabel.setLocation(120, 75); //120, 50
 		
-		lossLabel = new JLabel("LOSE: " + _lossAmount);
+		lossLabel = new JLabel("LOST: " + _lossAmount);
 		lossLabel.setFont(new Font("Serif", Font.BOLD, 18));
 		lossLabel.setAlignmentX(MAXIMIZED_HORIZ);
 		lossLabel.setAlignmentY(MAXIMIZED_VERT);
@@ -364,6 +370,9 @@ public class StatsWindow extends JFrame{
 				Map<String, Map<String, DeckData>> data = MainScreen.allStats.getData();	//added for readability of next lines
 				Map<String, DeckData> deckMap = data.get(hN);
 				DeckData dData = deckMap.get(dN);
+				if(dData == null){
+					System.out.println("dData is null");
+				}
 				
 				switch(value){
 					case JOptionPane.YES_OPTION:
@@ -372,7 +381,8 @@ public class StatsWindow extends JFrame{
 						deckMap.put(dN, dData);
 						MainScreen.allStats.data.put(hN, deckMap);
 				    	JOptionPane.showMessageDialog(null, "Game Recorded!  Be sure to reset information for the next game! ", "GAME RECORDED", JOptionPane.INFORMATION_MESSAGE);
-
+				    	_winAmount++;
+				    	winLabel.setText("WON: " + _winAmount);
 						break;
 					case JOptionPane.NO_OPTION:
 						matchData = new MatchData(hN, oN, dN, oDT, new ArrayList<String>(), oDA, gW, gL, r, false);
@@ -380,12 +390,72 @@ public class StatsWindow extends JFrame{
 						deckMap.put(dN, dData);
 						MainScreen.allStats.data.put(hN, deckMap);
 				    	JOptionPane.showMessageDialog(null, "Game Recorded!  Be sure to reset information for the next game! ", "GAME RECORDED", JOptionPane.INFORMATION_MESSAGE);
-
+				    	_lossAmount++;
+				    	lossLabel.setText("LOST: " + _lossAmount);
 						break;
 				}//eo switch
+				data.put(hN, deckMap);
 			}
 		});
 		
+		viewMatchupHistoryButton.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent ae){
+				String hN = getHeroName(_heroSelected);
+				String dN = currentDeckCB.getSelectedItem().toString();
+				String oN = getHeroName(opponentHeroCB.getSelectedIndex());
+				String oDT = opponentDeckTypeCB.getSelectedItem().toString(); 
+				Map<String, Map<String, DeckData>> data = MainScreen.allStats.getData();	//added for readability of next lines
+				Map<String, DeckData> deckMap = data.get(hN);
+				DeckData dData = deckMap.get(dN);
+				if(currentDeckCB.getSelectedItem().toString().equals("NEW DECK")){
+			    	JOptionPane.showMessageDialog(null, "No deck selected for player! ", "CANT VIEW HISTORY", JOptionPane.ERROR_MESSAGE);
+			    	return;
+				}
+				else if(opponentHeroCB.getSelectedItem().toString().equals("Choose Opponent")){
+					JOptionPane.showMessageDialog(null, "Opponent Hero not set! ", "CANT VIEW HISTORY", JOptionPane.ERROR_MESSAGE);
+			    	return;
+				}
+				else if(opponentDeckTypeCB.getSelectedItem().toString().equals("DECK TYPE")){
+					oDT = "NULL";
+				}
+				
+				new HistoryWindow(hN, dN, oN, oDT, dData);
+			}
+		});
+		
+		createDeckTypeButton.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent ae){
+				String userInput = JOptionPane.showInputDialog(StatsWindow.this, "Input deck type", "Add New Deck Type", JOptionPane.QUESTION_MESSAGE);
+				if(isDuplicate(userInput, DeckData.getDeckTypesArray())){
+					JOptionPane.showMessageDialog(StatsWindow.this, "Duplicate deck type entered!", "ERROR", JOptionPane.ERROR_MESSAGE);
+				}//eo if
+				else{
+					int userChoice = -1;
+					try{
+						userChoice = JOptionPane.showConfirmDialog(StatsWindow.this, "Add the deck: \""+ userInput.toUpperCase() + "\"?", "Add New Deck", JOptionPane.YES_NO_OPTION);
+					}catch(NullPointerException npe){
+						System.out.println("NPE: " + npe.getMessage());
+					}
+					
+					switch(userChoice){
+						case JOptionPane.YES_OPTION:
+							String newList[] = new String[DeckData.getDeckTypesArray().length+1];
+							for(int i=0; i < DeckData.getDeckTypesArray().length; i++){
+								newList[i] = DeckData.getDeckTypesArray()[i];
+							}//eo for
+							newList[DeckData.getDeckTypesArray().length] = userInput.toUpperCase();
+							DeckData.newDeckTypes(newList);
+							DeckData.saveDeckTypes();
+							opponentDeckTypeCB.addItem(userInput.toUpperCase());
+							opponentDeckTypeCB.setFont(new Font("Serif", Font.BOLD, 11));
+							
+							break;
+						case JOptionPane.NO_OPTION:
+							break;
+					}//eo switch
+				}//eo else if
+			}
+		});
 	}//eo addactions
 	
 	public void addComp(){
@@ -417,10 +487,7 @@ public class StatsWindow extends JFrame{
 		add(centerPanel, BorderLayout.CENTER);
 		add(archTypeLabel, BorderLayout.SOUTH);
 	}//eo addcomp
-	
-	public void closeWindow(){
-		this.dispose();
-	}//eo closing window
+
 	
 	public void newDeckDialoge(){
 		String userInput = JOptionPane.showInputDialog(StatsWindow.this, "Input deck name", "Add New Deck", JOptionPane.QUESTION_MESSAGE);
@@ -445,6 +512,12 @@ public class StatsWindow extends JFrame{
 					_deckList = newList;
 					currentDeckCB.addItem(userInput.toUpperCase());
 					currentDeckCB.setFont(new Font("Serif", Font.BOLD, 11));
+					
+					Map<String, Map<String, DeckData>> data = MainScreen.allStats.data;	//added for readability of next lines
+					Map<String, DeckData> deckMap = data.get(getHeroName(_heroSelected));
+					deckMap.put(userInput.toUpperCase(), new DeckData(userInput.toUpperCase(), getHeroName(_heroSelected)));
+					saveDeckList();
+					MainScreen.allStats.data.put(getHeroName(_heroSelected), deckMap);
 					break;
 				case JOptionPane.NO_OPTION:
 					break;
@@ -553,9 +626,9 @@ public class StatsWindow extends JFrame{
 		} catch (IOException e) {
 			System.out.println("IOE: " + e.getMessage());
 		}
-		_deckList = new String[listSize+1];
-		_deckList[0] = "NEW DECK";
-		for(int i=1; i <= listSize; i++){
+		_deckList = new String[listSize];
+		//_deckList[0] = "NEW DECK";
+		for(int i=0; i < listSize; i++){
 			try {
 				deckName = br.readLine();
 			} catch (IOException e) {
@@ -563,23 +636,81 @@ public class StatsWindow extends JFrame{
 				e.printStackTrace();
 			}
 			_deckList[i] = deckName;
-		}
+			
+		}//eo for
 		
 	}//eo loading decklist into combo box
 	
-	public void updateOpponentPortrait(int heroSelected){
-		BufferedImage img = null;
-		Image dimg = null;
+	public static void saveDeckList(){
+		FileWriter fw = null;
+		PrintWriter pw = null;
+		
 		try {
-		    img = ImageIO.read(new File(getPortraitFile(heroSelected)));
+			fw = new FileWriter("src/Data/testDeckList.txt");
+			pw = new PrintWriter(fw);
+			pw.println(_deckList.length);
+			for(int i=0; i < _deckList.length; i++){
+				pw.println(_deckList[i]);
+			}
+			
 		} catch (IOException e) {
-		    e.printStackTrace();
-		}		
-		dimg = img.getScaledInstance(115, 92,Image.SCALE_SMOOTH);	// 50% of original size	
-		opponentPortraitImage = new ImageIcon(dimg);
-		opponentPortraitLabel.setIcon(opponentPortraitImage);
-		System.out.println("updated opponent portrait");
+			System.err.println("IOException: " + e.getMessage());
+		}
+		finally{
+			pw.close();
+			//fw.close();
+		}
+	}
+	
+	public void updateOpponentPortrait(int heroSelected){
+		if(heroSelected  >= 0){
+			BufferedImage img = null;
+			Image dimg = null;
+			try {
+			    img = ImageIO.read(new File(getPortraitFile(heroSelected)));
+			} catch (IOException e) {
+			    e.printStackTrace();
+			}		
+			dimg = img.getScaledInstance(115, 92,Image.SCALE_SMOOTH);	// 50% of original size	
+			opponentPortraitImage = new ImageIcon(dimg);
+			opponentPortraitLabel.setIcon(opponentPortraitImage);
+			System.out.println("updated opponent portrait");
+		}
+		
 	}//eo method
+	
+	public String getPortraitFile(String hN){
+		String fileName = "";
+		if(hN.equals("WARRIOR")){
+			fileName = "images/WarriorPortrait.png";
+		}
+		else if(hN.equals("SHAMAN")){
+			fileName = "images/ShamanPortrait.png";
+		}
+		else if(hN.equals("ROGUE")){
+			fileName = "images/RoguePortrait.png";
+		}
+		else if(hN.equals("PALADIN")){
+			fileName = "images/PaladinPortrait.png";
+		}
+		else if(hN.equals("HUNTER")){
+			fileName = "images/HunterPortrait.png";
+		}
+		else if(hN.equals("DRUID")){
+			fileName = "images/DruidPortrait.png";
+		}
+		else if(hN.equals("WARLOCK")){
+			fileName = "images/WarlockPortrait.png";
+		}
+		else if(hN.equals("MAGE")){
+			fileName = "images/MagePortrait.png";
+		}
+		else if(hN.equals("PRIEST")){
+			fileName = "images/PriestPortrait.png";
+		}
+		
+		return fileName;
+	}
 	
 	public String getPortraitFile(int index){
 		String fileName = "";
@@ -619,5 +750,48 @@ public class StatsWindow extends JFrame{
 		System.out.println("need to finish");
 	}//eo opening help window
 
+	public void closeWindow(){
+		
+		Gson gs = new Gson();
+		String jsonString = gs.toJson(MainScreen.allStats.data);
+		FileWriter fw = null;
+		PrintWriter pw = null;
+		
+		try {
+			fw = new FileWriter("src/Data/allstats.json");
+			pw = new PrintWriter(fw);
+			pw.println(jsonString);
+			
+		} catch (IOException e) {
+			System.err.println("IOException: " + e.getMessage());
+		}
+		finally{
+			pw.close();
+			//fw.close();
+		}		
+		this.dispose();
+	}//eo closing window
+	
+	public void run(){
+		String fileName = "";
+		String oppHero;
+		while(true){
+			oppHero = opponentHeroCB.getSelectedItem().toString();
+			if(!oppHero.equals("Choose Opponent")){
+				fileName = getPortraitFile(oppHero);
+				BufferedImage img = null;
+				Image dimg = null;
+				try {
+				    img = ImageIO.read(new File(fileName));
+				} catch (IOException e) {
+				    e.printStackTrace();
+				}		
+				dimg = img.getScaledInstance(115, 92,Image.SCALE_SMOOTH);	// 50% of original size	
+				opponentPortraitImage = new ImageIcon(dimg);
+				opponentPortraitLabel.setIcon(opponentPortraitImage);
+			}
+			
+		}//eo while
+	}//end of run method
 	
 }//eo class

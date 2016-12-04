@@ -25,7 +25,7 @@ public class ArchTypeWindow extends JFrame implements Runnable{
 	private JPanel bottomCenterPanel;
 	private JLabel descriptionLabel;
 	private JButton addArchtypeButton;
-	private JButton undoButton;
+	volatile private JButton undoButton;
 	private JButton clearButton;
 	private JButton doneButton;
 	private JButton deleteButton;
@@ -33,7 +33,7 @@ public class ArchTypeWindow extends JFrame implements Runnable{
 	private JScrollPane scrollpane;
 	
 	private ArrayList<JButton> buttonList;
-	private ArrayList<Integer> undoIndexList;
+	volatile private ArrayList<Integer> undoIndexList;
 	private ArrayList<String> archtypeList;
 	
 	public ArchTypeWindow(){
@@ -187,6 +187,7 @@ public class ArchTypeWindow extends JFrame implements Runnable{
 			public void actionPerformed(ActionEvent ae){
 				StatsWindow.displayedArchTypes = archtypeList;
 				StatsWindow.updateDisplayedArchTypes();
+				
 				closeWindow();
 			}
 		});
@@ -210,6 +211,7 @@ public class ArchTypeWindow extends JFrame implements Runnable{
 	}//end of add comp
 	
 	public void closeWindow(){
+		
 		this.dispose();
 	}//eo closewindow
 	
@@ -257,7 +259,6 @@ public class ArchTypeWindow extends JFrame implements Runnable{
 			else{
 				undoButton.setEnabled(true);
 			}
-			System.out.println();
 		}//eo while
 	}//eo run
 }//end of class

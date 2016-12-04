@@ -17,6 +17,8 @@ public class Stats{
 		data.put("WARLOCK", new HashMap<String, DeckData>());
 		data.put("MAGE", new HashMap<String, DeckData>());
 		data.put("PRIEST", new HashMap<String, DeckData>());
+		
+		System.out.println("Stats constructor finished");
 	}//eo constructor
 	
 	public boolean deckExists(String hN, String dN){
@@ -25,6 +27,9 @@ public class Stats{
 	}//eo exists
 	
 	public Map<String, Map<String, DeckData>> getData(){
+		if(data == null){
+			System.out.println("RETURNING NULL DATA, CALLING CONSTRUCTOR FIRST");
+		}
 		return data;
 	}
 	

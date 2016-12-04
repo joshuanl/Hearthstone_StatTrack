@@ -7,8 +7,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -16,6 +20,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import Data.DeckData;
 import Data.Stats;
@@ -52,6 +59,20 @@ public class MainScreen extends JFrame{
 		setResizable(false);
 		
 		allStats = new Stats();
+//		//===================DESERIALIZING	
+//		java.lang.reflect.Type hashMapType = new TypeToken< Map<String, Map<String, DeckData>> >() { }.getType();
+//		Gson gs = new Gson();
+//		BufferedReader br;	
+//		try {
+//			br = new BufferedReader(new FileReader("src/Data/allstats.json"));
+//			String jsonString = br.readLine();
+//			allStats.data = gs.fromJson(jsonString, hashMapType);
+//		} catch (FileNotFoundException e) {
+//			System.out.println("FNE: " + e.getMessage());
+//		} catch (IOException e) {
+//			System.out.println("IOE: " + e.getMessage());
+//		}
+
 		
 		initVars();
 		addActions();
@@ -152,7 +173,7 @@ public class MainScreen extends JFrame{
 		
 		playButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent ae){
-				new StatsWindow(_heroSelected);
+				new Thread(new StatsWindow(_heroSelected)).start();
 				closeWindow();
 			}
 		});

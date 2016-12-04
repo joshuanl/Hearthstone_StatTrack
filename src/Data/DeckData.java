@@ -13,7 +13,8 @@ import java.util.Map;
 import javafx.util.Pair;
 
 public class DeckData {
-	private static ArrayList<String> _allDeckTypes;
+	public static ArrayList<String> _allDeckTypes;
+	public static String _allDeckTypesArray[];
 	private String _deckName;
 	private String _heroName;
 	private String _mainDeckType;
@@ -32,7 +33,22 @@ public class DeckData {
 		_statsAgainstHero = new HashMap<String, Pair<Integer, Integer>>();
 		_statsAgainstType = new HashMap<String, Pair<Integer, Integer>>();
 		
+		loadBlankData();
 	}//eo constructor
+	
+	public void loadBlankData(){
+		_statsAgainstHero.put("WARRIOR", new Pair<Integer, Integer>(0,0));
+		_statsAgainstHero.put("SHAMAN", new Pair<Integer, Integer>(0,0));
+		_statsAgainstHero.put("ROGUE", new Pair<Integer, Integer>(0,0));
+		_statsAgainstHero.put("PALADIN", new Pair<Integer, Integer>(0,0));
+		_statsAgainstHero.put("HUNTER", new Pair<Integer, Integer>(0,0));
+		_statsAgainstHero.put("DRUID", new Pair<Integer, Integer>(0,0));
+		_statsAgainstHero.put("WARLOCK", new Pair<Integer, Integer>(0,0));
+		_statsAgainstHero.put("MAGE", new Pair<Integer, Integer>(0,0));
+		_statsAgainstHero.put("PRIEST", new Pair<Integer, Integer>(0,0));
+		
+		
+	}
 	
 	public void addMatch(MatchData m){
 		_matchDataList.add(m);
@@ -139,6 +155,7 @@ public class DeckData {
 		for(int i=0; i < _allDeckTypes.size(); i++){
 			list[i+1] = _allDeckTypes.get(i);	
 		}
+		_allDeckTypesArray = list;
 		return list;
 	}
 	
@@ -232,6 +249,14 @@ public class DeckData {
 			pw.close();
 			//fw.close();
 		}
+	}//eo method
+
+	public static void newDeckTypes(String[] newList) {
+		_allDeckTypes.clear();
+		for (int i = 0; i < newList.length; i++) {
+			_allDeckTypes.add(newList[i]);
+		}//eo for
+		
 	}//eo method
 	
 }//end of class
